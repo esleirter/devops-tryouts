@@ -1,0 +1,24 @@
+pipeline{
+  agent any
+  environment {
+    registry = "<dockerhub-username>/<repo-name>"
+  }
+
+  stages {
+    stage('Unit Test'){
+        agent {
+            docker { image 'node:19.1.0-alpine3.16' }
+        }
+        steps {
+            sh 'cd app && npm install && npm test'
+        }
+    }
+    stage('Build image') {
+      steps {
+        // With a Docker Plugin
+        script {
+          dockerImage = docker.build registry + ":$BUILD_NUMBER"
+          }
+        }
+    }
+}
