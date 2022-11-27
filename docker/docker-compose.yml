@@ -1,0 +1,47 @@
+version: '3'
+services:
+  web:
+    image: nginx:1.23.2-alpine
+    restart: always
+    ports:
+    - 8008:80
+    volumes:
+    - ./info.php:/var/www/html/info.php
+    - ./default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+    - php
+    - mysql
+    networks:
+    - front
+  php:
+    image: php:7.4.30-fpm-alpine3.16
+    restart: always
+    volumes:
+    - ./info.php:/var/www/html/info.php
+    depends_on:
+    - mysql
+    healthcheck:
+      test: ["CMD", "php-fpm", "-t"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+    - front
+  mysql:
+    image: mysql:8.0.21
+    restart: always
+    environment:
+    - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    volumes:
+    - ./mysql/data:/var/lib/mysql:rw
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+    - front
+
+networks:
+  front:
+    driver: bridge
